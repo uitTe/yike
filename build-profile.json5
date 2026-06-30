@@ -1,0 +1,60 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "./keys/yike.p12",
+          "storePassword": "00000032765AC4577907415F6A13CAE236AB2C93DF1D3DF08CA01E1D28B7DB118B3F2B474FDF5EED3AA4D6BBE24C5388C1CF3CBA40C813EF4F37ED7F6245D22FBCED",
+          "keyAlias": "yike",
+          "keyPassword": "00000032F48EE2F6AC8CD90A6B0511BABFF276FAD1307FF2045C87180638B13E9B18899CF8F7B5478DECAF7B8106BEC4332BA9971F3732478E404B879580A8B3364C",
+          "signAlg": "SHA256withECDSA",
+          "profile": "./keys/yikeDebug.p7b",
+          "certpath": "./keys/yike.cer"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "26.0.0",
+        "compatibleSdkVersion": "6.1.0(23)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "cloud_objects",
+      "srcPath": "./cloud_objects"
+    }
+  ]
+}
