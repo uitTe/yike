@@ -2,18 +2,13 @@
 // Index.ets
 // 首页 — 我的组列表
 // 三个 Tab：常用 | 模块 | 我的
-// 对应 docs/开发流程梳理.md 中的 pages/index 结构
+// ✅ 使用 HdsTabs + 沉浸光感（UIDesignKit）
 // ============================================================
 
 import { promptAction, router } from '@kit.ArkUI'
-import { Group, Role } from '../../models/types'
+import { HdsTabs, HdsTabsController, hdsMaterial } from '@kit.UIDesignKit'
+import { Group } from '../../models/types'
 import { GroupCard } from '../../components/GroupCard'
-
-interface TabItem {
-  label: string
-  icon: string
-  value: number
-}
 
 /** 功能模块类型 */
 interface ModuleItem {
@@ -26,8 +21,9 @@ interface ModuleItem {
 @Component
 struct Index {
   @State currentTab: number = 0   // 0-常用 1-模块 2-我的
+  private tabsController: HdsTabsController = new HdsTabsController()
 
-  // 模拟组数据（后续替换为 CloudDB 查询）
+  // 模拟组数据
   @State groups: Group[] = [
     {
       id: 'group_001',
@@ -38,7 +34,7 @@ struct Index {
       enabledFeatures: ['schedule'],
       createTime: new Date().toISOString(),
       myRole: 'owner'
-    } as Group
+    }
   ]
 
   // 功能模块列表
@@ -49,47 +45,63 @@ struct Index {
     { name: '公告', icon: '📢', enabled: false }
   ]
 
-  // 底部页签
-  private tabs: TabItem[] = [
-    { label: '常用', icon: '⭐', value: 0 },
-    { label: '模块', icon: '▦', value: 1 },
-    { label: '我的', icon: '👤', value: 2 }
-  ]
-
   build() {
-    Column() {
-      // 顶部导航栏
-      this.buildNavBar()
-
-      // 内容区
+    Stack() {
+      // ===== 主内容区 =====
       Column() {
+        this.buildNavBar()
+
+        // 各 Tab 页面
         if (this.currentTab === 0) {
-          // ========== 常用 Tab: 组列表 ==========
           this.buildGroupsPage()
         } else if (this.currentTab === 1) {
-          // ========== 模块 Tab ==========
           this.buildModulesPage()
         } else {
-          // ========== 我的 Tab ==========
-          // ========== 我的 Tab ==========
-          // router.pushUrl({ url: 'pages/my/MyPage' })
-          Column() {
-            Text('我的页面')
-              .fontSize(16)
-              .fontColor('#333333')
-          }
-
+          this.buildMyPage()
         }
       }
-      .layoutWeight(1)
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#F5F6F8')
+
+      // ===== HdsTabs 底部悬浮导航 =====
+      HdsTabs({
+        controller: this.tabsController,
+        index: this.currentTab
+      }) {
+        TabContent()
+          .tabBar(new BottomTabBarStyle('⭐', '常用'))
+
+        TabContent()
+          .tabBar(new BottomTabBarStyle('▦', '模块'))
+
+        TabContent()
+          .tabBar(new BottomTabBarStyle('👤', '我的'))
+      }
+      .barOverlap(true)                     // ✅ 关键：悬浮在内容上
+      .barPosition(BarPosition.End)
+      .vertical(false)
+      .barFloatingStyle({
+        barWidth: { mediumWidth: 320 },
+        barBottomMargin: 24,
+        gradientMask: {
+          maskColor: '#66F1F3F5',
+          maskHeight: 92
+        },
+        systemMaterialEffect: {
+          materialType: hdsMaterial.MaterialType.IMMERSIVE,   // ✅ 沉浸光感
+          materialLevel: hdsMaterial.MaterialLevel.EXQUISITE
+        }
+      })
+      .onChange((index: number) => {
+        this.currentTab = index
+      })
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F6F8')
   }
 
   // ==================== 顶部导航 ====================
-
   @Builder
   buildNavBar() {
     Row() {
@@ -105,12 +117,10 @@ struct Index {
     .backgroundColor('#FFFFFF')
   }
 
-  // ==================== 常用 Tab: 组列表 ====================
-
+  // ==================== 常用 Tab ====================
   @Builder
   buildGroupsPage() {
     Column() {
-      // 操作栏
       Row() {
         Text('我的组')
           .fontSize(16)
@@ -125,21 +135,17 @@ struct Index {
       .width('100%')
       .padding({ left: 16, right: 16, top: 16, bottom: 8 })
 
-      // 组卡片列表
       List({ space: 12 }) {
         ForEach(this.groups, (group: Group) => {
           ListItem() {
             GroupCard({
               group: group,
-              myRole: group.myRole || 'member'
+              myRole: group.myRole ?? 'member'
             })
-            .onClick(() => {
-              this.onGroupClick(group)
-            })
+              .onClick(() => this.onGroupClick(group))
           }
         }, (group: Group) => group.id)
 
-        // 添加组按钮
         ListItem() {
           this.buildAddGroupButton()
         }
@@ -151,7 +157,6 @@ struct Index {
     }
   }
 
-  /** 添加组按钮 */
   @Builder
   buildAddGroupButton() {
     Row() {
@@ -169,23 +174,19 @@ struct Index {
     .borderRadius(16)
     .backgroundColor('#F5F8FF')
     .border({ width: 1, color: '#E0ECFA' })
-    .onClick(() => {
-      this.navigateToCreateGroup()
-    })
+    .onClick(() => this.navigateToCreateGroup())
   }
 
-  /** 组卡片点击 */
   private onGroupClick(group: Group) {
     router.pushUrl({
       url: 'pages/group/GroupDetail',
       params: { groupId: group.id }
-    }).catch((err: Error) => {
-      promptAction.showToast({ message: '跳转失败' })
+    }).catch(() => {
+      promptAction.showToast({ message: '跳转失败', duration: 2000 })
     })
   }
 
   // ==================== 模块 Tab ====================
-
   @Builder
   buildModulesPage() {
     Column() {
@@ -235,35 +236,44 @@ struct Index {
           color: mod.enabled ? '#00000008' : '#00000000',
           offsetY: 1
         })
-        .onClick(() => {
-          this.onModuleClick(mod)
-        })
+        .onClick(() => this.onModuleClick(mod))
       }, (mod: ModuleItem) => mod.name)
     }
     .width('100%')
   }
 
-  /** 模块点击 */
   private onModuleClick(mod: ModuleItem) {
     if (mod.name === '排班' && mod.enabled) {
       router.pushUrl({
         url: 'pages/group/SchedulePage',
         params: { groupId: 'group_001' }
       }).catch(() => {
-        promptAction.showToast({ message: '跳转失败' })
+        promptAction.showToast({ message: '跳转失败', duration: 2000 })
       })
     } else if (!mod.enabled) {
-      promptAction.showToast({ message: `${mod.name} 尚未开启` })
+      promptAction.showToast({ message: `${mod.name} 尚未开启`, duration: 2000 })
     }
   }
 
-  // ==================== 导航 ====================
+  // ==================== 我的 Tab ====================
+  @Builder
+  buildMyPage() {
+    Column() {
+      Text('我的页面')
+        .fontSize(16)
+        .fontColor('#333333')
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+  }
 
+  // ==================== 导航 ====================
   private navigateToCreateGroup() {
     router.pushUrl({
       url: 'pages/group/CreateGroupPage'
     }).catch(() => {
-      promptAction.showToast({ message: '跳转失败' })
+      promptAction.showToast({ message: '跳转失败', duration: 2000 })
     })
   }
 }
@@ -274,7 +284,6 @@ struct GridItemComponent {
   @Prop name: string = ''
   @Prop icon: string = ''
   @Prop moduleEnabled: boolean
-
 
   build() {
     Column() {
@@ -308,10 +317,10 @@ struct GridItemComponent {
           url: 'pages/group/SchedulePage',
           params: { groupId: 'group_001' }
         }).catch(() => {
-          promptAction.showToast({ message: '跳转失败' })
+          promptAction.showToast({ message: '跳转失败', duration: 2000 })
         })
       } else {
-        promptAction.showToast({ message: `${this.name} 尚未开启` })
+        promptAction.showToast({ message: `${this.name} 尚未开启`, duration: 2000 })
       }
     })
   }
