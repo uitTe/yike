@@ -10,7 +10,7 @@
     },
     {
       "name": "entryability_label",
-      "value": "AGC Demo"
+      "value": "壹刻"
     },
     {
       "name": "cloudDB_label",
@@ -235,6 +235,10 @@
     {
       "name": "cloudStorage_link_copy",
       "value": "Copy"
+    },
+    {
+      "name": "app_name",
+      "value": "壹刻"
     },
     {
       "name": "common_prompt",
